@@ -36,25 +36,25 @@ import java.util.List;
 import org.scijava.service.SciJavaService;
 
 /**
- * Interface for services that manage the Recently Used Files menu.
+ * Interface for services that manage a menu of recently used locations.
  * 
  * @author Grant Harris
  * @author Curtis Rueden
  */
-public interface RecentFileService extends SciJavaService {
+public interface RecentService extends SciJavaService {
 
-	int MAX_FILES_SHOWN = 10;
+	int MAX_ENTRIES_SHOWN = 10;
 
-	/** Adds or refreshes a path on the list of recent files. */
-	void add(String path);
+	/** Adds or refreshes a location on the list of recent locations. */
+	void add(Location location);
 
-	/** Removes a path from the list of recent files. */
-	boolean remove(String path);
+	/** Removes a location from the list of recent locations. */
+	boolean remove(Location location);
 
-	/** Clears the list of recent files. */
+	/** Clears the list of recent locations. */
 	void clear();
 
-	/** Gets the list of recent files. */
-	List<String> getRecentFiles();
+	/** Gets the list of recent locations. */
+	List<Location> getRecentLocations();
 
 }

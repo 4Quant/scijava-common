@@ -31,6 +31,7 @@
 
 package org.scijava.io;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -53,29 +54,25 @@ import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 import org.scijava.util.FileUtils;
 
-// TODO - DefaultRecentFileService, DefaultWindowService, and DefaultLUTService
+// TODO - RecentLocationService, WindowService, and LUTService
 // all build menus dynamically (see createInfo()). We may be able to abstract a
 // helper class out of these that can be used by them and future services.
 
 /**
- * Default service for managing the Recently Used Files menu.
+ * Default service for managing a menu of recently used locations.
  * <p>
- * Behavior: There is a limited number of files presented (maxFilesShown),
- * regardless of the list length. When a file is opened, its path is added to
- * the top of the list. If an image has been saved as a new file, its path is
- * added to the top of the list.
+ * Behavior: There is a limited number of locations presented (maxFilesShown),
+ * regardless of the location length. When a location is opened, its path is
+ * added to the top of the list. If an image has been saved as a new location,
+ * its path is added to the top of the list.
  * </p>
- * <ul>
- * <li>add(String path)</li>
- * <li>remove(String path)</li>
- * </ul>
  * 
  * @author Grant Harris
  * @author Curtis Rueden
  */
 @Plugin(type = Service.class)
-public final class DefaultRecentFileService extends AbstractService implements
-	RecentFileService
+public final class DefaultRecentService extends AbstractService
+	implements RecentService
 {
 
 	// -- Constants --
@@ -85,7 +82,7 @@ public final class DefaultRecentFileService extends AbstractService implements
 
 	private static final String RECENT_MENU_NAME = "Open Recent";
 
-	private static final String RECENT_FILES_KEY = "recentfiles";
+	private static final String RECENT_LOCATIONS_KEY = "recent";
 
 	// -- Fields --
 
@@ -101,32 +98,35 @@ public final class DefaultRecentFileService extends AbstractService implements
 	@Parameter
 	private PrefService prefService;
 
-	private List<String> recentFiles;
-	private Map<String, ModuleInfo> recentModules;
+	@Parameter
+	private LocationService locationService;
+
+	private List<Location> recentLocations;
+	private Map<Location, ModuleInfo> recentModules;
 
 	// -- RecentFileService methods --
 
 	@Override
-	public void add(final String path) {
-		final boolean present = recentModules.containsKey(path);
+	public void add(final Location location) {
+		final boolean present = recentModules.containsKey(location);
 
-		// add path to recent files list
-		if (present) recentFiles.remove(path);
-		recentFiles.add(path);
+		// add path to recent locations list
+		if (present) recentLocations.remove(location);
+		recentLocations.add(location);
 
 		// persist the updated list
-		prefService.putList(recentFiles, RECENT_FILES_KEY);
+		saveLocations();
 
 		if (present) {
 			// path already present; update linked module info
-			final ModuleInfo info = recentModules.get(path);
+			final ModuleInfo info = recentModules.get(location);
 			// TODO - update module weights
 			info.update(eventService);
 		}
 		else {
 			// new path; create linked module info
-			final ModuleInfo info = createInfo(path);
-			recentModules.put(path, info);
+			final ModuleInfo info = createInfo(location);
+			recentModules.put(location, info);
 
 			// register the module with the module service
 			moduleService.addModule(info);
@@ -134,15 +134,15 @@ public final class DefaultRecentFileService extends AbstractService implements
 	}
 
 	@Override
-	public boolean remove(final String path) {
-		// remove path from recent files list
-		final boolean success = recentFiles.remove(path);
+	public boolean remove(final Location location) {
+		// remove path from recent locations list
+		final boolean success = recentLocations.remove(location);
 
 		// persist the updated list
-		prefService.putList(recentFiles, RECENT_FILES_KEY);
+		saveLocations();
 
 		// remove linked module info
-		final ModuleInfo info = recentModules.remove(path);
+		final ModuleInfo info = recentModules.remove(location);
 		if (info != null) moduleService.removeModule(info);
 
 		return success;
@@ -150,8 +150,8 @@ public final class DefaultRecentFileService extends AbstractService implements
 
 	@Override
 	public void clear() {
-		recentFiles.clear();
-		prefService.clear(RECENT_FILES_KEY);
+		recentLocations.clear();
+		prefService.clear(RECENT_LOCATIONS_KEY);
 
 		// unregister the modules with the module service
 		moduleService.removeModules(recentModules.values());
@@ -160,18 +160,18 @@ public final class DefaultRecentFileService extends AbstractService implements
 	}
 
 	@Override
-	public List<String> getRecentFiles() {
-		return Collections.unmodifiableList(recentFiles);
+	public List<Location> getRecentLocations() {
+		return Collections.unmodifiableList(recentLocations);
 	}
 
 	// -- Service methods --
 
 	@Override
 	public void initialize() {
-		recentFiles = prefService.getList(RECENT_FILES_KEY);
-		recentModules = new HashMap<String, ModuleInfo>();
-		for (final String path : recentFiles) {
-			recentModules.put(path, createInfo(path));
+		loadLocations();
+		recentModules = new HashMap<Location, ModuleInfo>();
+		for (final Location location : recentLocations) {
+			recentModules.put(location, createInfo(location));
 		}
 
 		// register the modules with the module service
@@ -182,27 +182,47 @@ public final class DefaultRecentFileService extends AbstractService implements
 
 	@EventHandler
 	protected void onEvent(final IOEvent event) {
-		add(event.getDescriptor());
+		add(event.getLocation());
 	}
 
 	// -- Helper methods --
 
-	/** Creates a {@link ModuleInfo} to reopen data at the given path. */
-	private ModuleInfo createInfo(final String path) {
-		// CTR FIXME: Avoid circular dependency between ij-core and ij-commands.
+	/** Loads the list of recent locations from persistent storage. */
+	private void loadLocations() {
+		final List<String> locationPaths = prefService.getList(RECENT_LOCATIONS_KEY);
+		recentLocations = new ArrayList<Location>(locationPaths.size());
+		for (final String path : locationPaths) {
+			recentLocations.add(locationService.create(path));
+		}
+	}
+
+	/** Saves the list of recent locations to persistent storage. */
+	private void saveLocations() {
+		final ArrayList<String> locationPaths = new ArrayList<String>(recentLocations.size());
+		for (final Location location : recentLocations) {
+			location.getPath();
+		}
+		prefService.putList(locationPaths, RECENT_LOCATIONS_KEY);
+	}
+
+	/** Creates a {@link ModuleInfo} to reopen data at the given location. */
+	private ModuleInfo createInfo(final Location location) {
+		// CTR FIXME: Avoid circular dependency between
+		// scijava-common and scijava-plugins-commands.
 		final String commandClassName = "imagej.plugins.commands.io.OpenFile";
 		final CommandInfo info = new CommandInfo(commandClassName);
 
-		// hard code path to open as a preset
+		// hard code location to open as a preset
+		// CTR FIXME: Generalize OpenFile command to OpenLocation.
 		final HashMap<String, Object> presets = new HashMap<String, Object>();
-		presets.put("inputFile", path);
+		presets.put("inputFile", location.getPath());
 		info.setPresets(presets);
 
 		// set menu path
 		final MenuPath menuPath = new MenuPath();
 		menuPath.add(new MenuEntry(MenuConstants.FILE_LABEL));
 		menuPath.add(new MenuEntry(RECENT_MENU_NAME));
-		final MenuEntry leaf = new MenuEntry(shortPath(path));
+		final MenuEntry leaf = new MenuEntry(shortPath(location));
 		menuPath.add(leaf);
 		info.setMenuPath(menuPath);
 
@@ -220,9 +240,9 @@ public final class DefaultRecentFileService extends AbstractService implements
 	}
 
 	/** Shortens the given path to ensure it conforms to a maximum length. */
-	private String shortPath(final String path) {
+	private String shortPath(final Location location) {
 		// TODO - shorten path name as needed
-		return FileUtils.limitPath(path, MAX_DISPLAY_LENGTH);
+		return FileUtils.limitPath(location.toString(), MAX_DISPLAY_LENGTH);
 	}
 
 }

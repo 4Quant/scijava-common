@@ -43,7 +43,7 @@ import org.scijava.event.EventHistory;
 import org.scijava.event.EventService;
 import org.scijava.input.InputService;
 import org.scijava.io.IOService;
-import org.scijava.io.RecentFileService;
+import org.scijava.io.RecentService;
 import org.scijava.log.LogService;
 import org.scijava.menu.MenuService;
 import org.scijava.module.ModuleService;
@@ -193,8 +193,8 @@ public abstract class AbstractGateway extends AbstractRichPlugin implements
 	}
 
 	@Override
-	public RecentFileService recentFile() {
-		return get(RecentFileService.class);
+	public RecentService recent() {
+		return get(RecentService.class);
 	}
 
 	@Override
