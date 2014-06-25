@@ -31,6 +31,7 @@
 
 package org.scijava.ui;
 
+import java.io.File;
 import java.util.List;
 
 import org.scijava.app.StatusService;
@@ -46,6 +47,7 @@ import org.scijava.thread.ThreadService;
 import org.scijava.ui.viewer.DisplayViewer;
 import org.scijava.ui.viewer.DisplayWindow;
 import org.scijava.util.Prefs;
+import org.scijava.widget.FileWidget;
 
 /**
  * Abstract superclass for {@link UserInterface} implementations.
@@ -178,6 +180,11 @@ public abstract class AbstractUserInterface extends AbstractRichPlugin
 	}
 
 	@Override
+	public File chooseFile(final File file, final String style) {
+		return chooseFile(fileChooserTitle(style), file, style);
+	}
+
+	@Override
 	public void saveLocation() {
 		final ApplicationFrame appFrame = getApplicationFrame();
 		if (appFrame != null) {
@@ -205,6 +212,14 @@ public abstract class AbstractUserInterface extends AbstractRichPlugin
 	 */
 	protected void createUI() {
 		restoreLocation();
+	}
+
+	/** Gets a default file chooser title to use when none is given. */
+	protected String fileChooserTitle(final String style) {
+		if (style.equals(FileWidget.DIRECTORY_STYLE)) return "Choose a directory";
+		if (style.equals(FileWidget.OPEN_STYLE)) return "Open";
+		if (style.equals(FileWidget.SAVE_STYLE)) return "Save";
+		return "Choose a file";
 	}
 
 }
