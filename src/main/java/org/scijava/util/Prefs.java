@@ -302,6 +302,84 @@ public final class Prefs {
 		return map;
 	}
 
+	/**
+	 * Puts an iterable into the preferences.
+	 */
+	public static void putIterable(final Iterable<String> iterable, final String key) {
+		putIterable(prefs(null), iterable, key);
+	}
+
+	public static void putIterable(final Preferences preferences,
+		final Iterable<String> iterable, final String key)
+	{
+		putIterable(preferences.node(key), iterable);
+	}
+
+	/** Puts an iterable into the preferences. */
+	public static void putIterable(final Preferences preferences,
+		final Iterable<String> iterable)
+	{
+		if (preferences == null) {
+			throw new IllegalArgumentException("Preferences not set.");
+		}
+		int index = 0;
+		for (final String value : iterable) {
+			preferences.put("" + index++, value == null ? null : value.toString());
+		}
+	}
+
+	/** Gets an iterable from the preferences. */
+	public static Iterable<String> getIterable(final String key) {
+		return getIterable(prefs(null), key);
+	}
+
+	/**
+	 * Gets an iterable from the preferences. Returns an empty iterable if nothing in
+	 * prefs.
+	 */
+	public static Iterable<String> getIterable(final Preferences preferences,
+		final String key)
+	{
+		if (preferences == null) {
+			throw new IllegalArgumentException("Preferences not set.");
+		}
+		return new Iterable<String>() {
+			@Override
+			public Iterator<String> iterator() {
+				return new Iterator<String>() {
+					private String value;
+					private int index;
+					{
+						findNext();
+					}
+
+					@Override
+					public String next() {
+						final String result = value;
+						findNext();
+						return result;
+					}
+
+					@Override
+					public boolean hasNext() {
+						return value != null;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+
+					private void findNext() {
+						if (index < 0) return;
+						value = preferences.get("" + index, null);
+						index = value == null ? -1 : index + 1;
+					}
+				};
+			}
+		};
+	}
+
 	/** Puts a list into the preferences. */
 	public static void putList(final List<String> list, final String key) {
 		putList(prefs(null), list, key);
