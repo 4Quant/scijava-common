@@ -246,7 +246,7 @@ public final class Prefs {
 		}
 	}
 
-	/** Puts a list into the preferences. */
+	/** Puts a map into the preferences. */
 	public static void putMap(final Map<String, String> map, final String key) {
 		putMap(prefs(null), map, key);
 	}
@@ -257,7 +257,7 @@ public final class Prefs {
 		putMap(preferences.node(key), map);
 	}
 
-	/** Puts a list into the preferences. */
+	/** Puts a map into the preferences. */
 	public static void putMap(final Preferences preferences,
 		final Map<String, String> map)
 	{
