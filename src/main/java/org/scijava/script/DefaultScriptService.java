@@ -283,6 +283,11 @@ public class DefaultScriptService extends
 				return scripts().values();
 			}
 
+			@Override
+			public Class<?> getType() {
+				return ScriptInfo.class;
+			}
+
 		});
 	}
 

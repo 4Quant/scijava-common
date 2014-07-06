@@ -86,6 +86,12 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 			public ArrayList<PT> get() {
 				return new ArrayList<PT>(getInstances());
 			}
+
+			@Override
+			public Class<?> getType() {
+				return getPluginType();
+			}
+
 		});
 	}
 
