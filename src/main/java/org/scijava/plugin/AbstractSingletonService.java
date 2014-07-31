@@ -31,7 +31,6 @@
 
 package org.scijava.plugin;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,15 +57,12 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 	// TODO: Listen for PluginsAddedEvent and PluginsRemovedEvent
 	// and update the list of singletons accordingly.
 
-	/** List of singleton plugin instances. */
-	private List<PT> instances;
-
 	// -- SingletonService methods --
 
 	@Override
 	public List<PT> getInstances() {
-		if (instances == null) initInstances();
-		return instances;
+		final List<PT> plugins = objectService.getObjects(getPluginType());
+		return Collections.unmodifiableList(plugins);
 	}
 
 	@Override
@@ -84,7 +80,7 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 
 			@Override
 			public List<PT> get() {
-				return new ArrayList<PT>(getInstances());
+				return createInstances();
 			}
 
 			@Override
@@ -97,15 +93,14 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 
 	// -- Helper methods --
 
-	private synchronized void initInstances() {
-		if (instances != null) return;
-
-		instances =
-			Collections.unmodifiableList(filterInstances(getPluginService()
-				.createInstancesOfType(getPluginType())));
+	private List<PT> createInstances() {
+		final List<PT> instances =
+			filterInstances(getPluginService().createInstancesOfType(getPluginType()));
 
 		log.info("Found " + instances.size() + " " +
 			getPluginType().getSimpleName() + " plugins.");
+
+		return instances;
 	}
 
 	/**
