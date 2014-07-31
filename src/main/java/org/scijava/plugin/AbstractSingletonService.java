@@ -83,7 +83,7 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 		objectService.getIndex().addLater(new LazyObjects<PT>() {
 
 			@Override
-			public ArrayList<PT> get() {
+			public List<PT> get() {
 				return new ArrayList<PT>(getInstances());
 			}
 
@@ -114,7 +114,7 @@ public abstract class AbstractSingletonService<PT extends SingletonPlugin>
 	 * @param list the initial list of instances
 	 * @return the filtered list of instances
 	 */
-	protected List<? extends PT> filterInstances(List<PT> list) {
+	protected List<PT> filterInstances(List<PT> list) {
 		return list;
 	}
 
