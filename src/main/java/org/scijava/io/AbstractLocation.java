@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,25 +31,59 @@
 
 package org.scijava.io;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.scijava.plugin.AbstractWrapperPlugin;
 
 /**
  * Abstract base class for {@link Location} plugins.
- * 
+ *
  * @author Curtis Rueden
  */
-public abstract class AbstractLocation extends
-	AbstractWrapperPlugin<String> implements Location
+public abstract class AbstractLocation extends AbstractWrapperPlugin<String>
+	implements Location
 {
+
+	/** The URI backing this location, if any. */
+	private URI uri;
 
 	// -- Location methods --
 
 	@Override
 	public String getPath() {
-		return null;
+		return uri == null ? null : uri.toString();
+	}
+
+	@Override
+	public URI getURI() {
+		return uri;
+	}
+
+	// -- WrapperPlugin methods --
+
+	@Override
+	public void set(final String data) {
+		try {
+			uri = new URI(data);
+		}
+		catch (final URISyntaxException exc) {
+			throw new IllegalArgumentException(exc);
+		}
 	}
 
 	// -- Typed methods --
+
+	@Override
+	public boolean supports(final String data) {
+		try {
+			new URI(data);
+			return true;
+		}
+		catch (final URISyntaxException exc) {
+			return false;
+		}
+	}
 
 	@Override
 	public Class<String> getType() {

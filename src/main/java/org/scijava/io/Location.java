@@ -31,6 +31,8 @@
 
 package org.scijava.io;
 
+import java.net.URI;
+
 import org.scijava.plugin.WrapperPlugin;
 
 /**
@@ -53,5 +55,8 @@ public interface Location extends WrapperPlugin<String> {
 	 * </p>
 	 */
 	String getPath();
+
+	/** Gets the associated {@link URI}, or null if none. */
+	URI getURI();
 
 }

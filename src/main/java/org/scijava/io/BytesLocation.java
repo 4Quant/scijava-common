@@ -31,6 +31,7 @@
 
 package org.scijava.io;
 
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 
 import org.scijava.plugin.Plugin;
@@ -45,7 +46,7 @@ public class BytesLocation extends AbstractLocation {
 
 	private ByteBuffer bytes;
 
-	// -- ByteArrayLocation methods --
+	// -- BytesLocation methods --
 
 	/** Gets the associated {@link ByteBuffer}. */
 	public ByteBuffer getByteBuffer() {
@@ -66,6 +67,7 @@ public class BytesLocation extends AbstractLocation {
 		// TODO: support a "bytes:capacity=1234&direct=true" notation.
 		// This is similar to OMERO and Fake. Let's make a common superclass!
 		bytes.allocate(capacity);
+		URLDecoder
 		throw new UnsupportedOperationException();
 	}
 

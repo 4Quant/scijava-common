@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,55 +31,104 @@
 
 package org.scijava.io;
 
-import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.scijava.plugin.Plugin;
 
 /**
- * {@link Location} backed by a {@link File} on disk.
- * 
+ * {@link Location} pointing at an OMERO server.
+ *
  * @author Curtis Rueden
  */
 @Plugin(type = Location.class)
-public class FileLocation extends AbstractLocation {
+public class OMEROLocation extends AbstractLocation {
 
-	private File file;
+	// -- OMEROLocation methods --
 
-	// -- FileLocation methods --
-
-	/** Gets the location's associated {@link File}. */
-	public File getFile() {
-		return file;
+	public String getServer() {
+		return getURI().getHost();
 	}
 
-	// -- URILocation methods --
-
-	@Override
-	public URI getURI() {
-		return file.toURI();
+	public int getPort() {
+		return getURI().getPort();
 	}
+
+	public String getSessionID() {
+		return sessionID;
+	}
+
+	public String getUser() {
+		return getURI().getUserInfo();
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public boolean isEncrypted() {
+		return encrypted;
+	}
+
+	public void setServer(final String server) {
+		this.server = server;
+	}
+
+	public void setPort(final int port) {
+		this.port = port;
+	}
+
+	public void setSessionID(final String sessionID) {
+		this.sessionID = sessionID;
+		if (sessionID != null) {
+			// NB: Drop username & password from memory when we have a session ID.
+			user = password = null;
+		}
+	}
+
+	public void setUser(final String user) {
+		this.user = user;
+	}
+
+	public void setPassword(final String password) {
+		this.password = password;
+	}
+
+	public void setEncrypted(final boolean encrypted) {
+		this.encrypted = encrypted;
+	}
+
 
 	// -- Location methods --
 
 	@Override
 	public String getPath() {
-		return get();
+		return uri.toString();
 	}
 
 	// -- WrapperPlugin methods --
 
 	@Override
-	public void set(final String filePath) {
-		super.set(filePath);
-		file = new File(filePath);
+	public void set(final String data) {
+		try {
+			uri = new URI(data);
+		}
+		catch (URISyntaxException exc) {
+			throw new IllegalArgumentException(exc);
+		}
 	}
 
 	// -- Typed methods --
 
 	@Override
-	public boolean supports(final String filePath) {
-		return new File(filePath).exists();
+	public boolean supports(final String data) {
+		try {
+			new URI(data);
+			return true;
+		}
+		catch (final URISyntaxException exc) {
+			return false;
+		}
 	}
 
 }

@@ -8,13 +8,13 @@
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,55 +31,77 @@
 
 package org.scijava.io;
 
-import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import org.scijava.plugin.Plugin;
 
 /**
- * {@link Location} backed by a {@link File} on disk.
- * 
+ * {@link Location} backed by a {@link URI}.
+ *
  * @author Curtis Rueden
  */
 @Plugin(type = Location.class)
-public class FileLocation extends AbstractLocation {
+public class URLLocation extends AbstractLocation {
 
-	private File file;
+	/** The URL backing this location. */
+	private URL url;
 
-	// -- FileLocation methods --
+	// -- URLLocation methods --
 
-	/** Gets the location's associated {@link File}. */
-	public File getFile() {
-		return file;
+	/** Gets the associated {@link URL}. */
+	public URL getURL() {
+		return url;
 	}
 
 	// -- URILocation methods --
 
+	/**
+	 * Gets the associated {@link URI}, or null if this URL is not formatted
+	 * strictly according to to RFC2396 and cannot be converted to a URI.
+	 */
 	@Override
 	public URI getURI() {
-		return file.toURI();
+		try {
+			return url.toURI();
+		}
+		catch (final URISyntaxException exc) {
+			return null;
+		}
 	}
 
 	// -- Location methods --
 
 	@Override
 	public String getPath() {
-		return get();
+		return url.toString();
 	}
 
 	// -- WrapperPlugin methods --
 
 	@Override
-	public void set(final String filePath) {
-		super.set(filePath);
-		file = new File(filePath);
+	public void set(final String data) {
+		try {
+			url = new URL(data);
+		}
+		catch (final MalformedURLException exc) {
+			throw new IllegalArgumentException(exc);
+		}
 	}
 
 	// -- Typed methods --
 
 	@Override
-	public boolean supports(final String filePath) {
-		return new File(filePath).exists();
+	public boolean supports(final String data) {
+		try {
+			new URL(data);
+			return true;
+		}
+		catch (final MalformedURLException exc) {
+			return false;
+		}
 	}
 
 }
