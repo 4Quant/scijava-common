@@ -40,8 +40,8 @@ import javax.script.ScriptException;
  */
 public class DefaultScriptInterpreter implements ScriptInterpreter {
 
-	private ScriptEngine engine;
-	private History history;
+	private final ScriptEngine engine;
+	private final History history;
 	private String currentCommand = "";
 
 	/**
@@ -50,7 +50,9 @@ public class DefaultScriptInterpreter implements ScriptInterpreter {
 	 * @param scriptService the script service
 	 * @param engine the script engine
 	 */
-	public DefaultScriptInterpreter(ScriptService scriptService, final ScriptEngine engine) {
+	public DefaultScriptInterpreter(final ScriptService scriptService,
+		final ScriptEngine engine)
+	{
 		this.engine = engine;
 		history = new History(engine.getClass().getName());
 		readHistory();
